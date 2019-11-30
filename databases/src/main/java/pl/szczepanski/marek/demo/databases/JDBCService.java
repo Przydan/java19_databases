@@ -15,6 +15,7 @@ public class JDBCService {
         Statement myStmt = null;
         ResultSet myRs = null;
 
+        //Dlatego robimy traya żeby w finally zamykać wszystkie połączenia. By nie dopuścić do connectionLeak
         try {
             System.out.println("\n\n==========");
             // 1. Get a connection to database
@@ -29,13 +30,15 @@ public class JDBCService {
             myRs = myStmt.executeQuery("select * from employees");
 
             // 4. Process the result set
+            System.out.println("########################################");
             while (myRs.next()) {
                 String emploee = myRs.getString("last_name")
                         + ", " + myRs.getString("first_name");
                 System.out.println(emploee);
             }
+            System.out.println("########################################");
 
-            return "OK";
+            return "OK 123";
         } catch (Exception exc) {
             exc.printStackTrace();
         } finally {
@@ -60,21 +63,29 @@ public class JDBCService {
         String pass = "";
 
             // 1. Get a connection to database
-        try (
+        try ( // miejsce na stworzenie obiektu którey jest resources
+              // try otwiera zasoby
+              // to samo co wyżej bo samo za nas zamyka połącznienia
+
                 Connection myConn = DriverManager.getConnection(dbUrl, user, pass)
         ) {
 
             // 2. Create a statement
+            // obiekt który pozwala nam działać na bazie danych
+            // taki pilot :P
             Statement myStmt = myConn.createStatement();
 
             // 3. Execute SQL query
+
             ResultSet myRs = myStmt.executeQuery("select * from employees");
 
             // 4. Process the result set
+            System.out.println("########################################");
             while (myRs.next()) {
                 System.out.println(myRs.getString("last_name")
                         + ", " + myRs.getString("first_name"));
             }
+            System.out.println("########################################");
             ResultSet myRs1 = myStmt
                     .executeQuery("select * from employees " +
                             "where LOWER(department) = 'legal'");
@@ -96,6 +107,7 @@ public class JDBCService {
             Statement myStmt = myConn.createStatement();
 
             // 3. Insert a new employee
+            System.out.println("########################################");
             System.out.println("Inserting a new employee to database\n");
 
             int rowsAffected = myStmt.executeUpdate(
@@ -105,7 +117,7 @@ public class JDBCService {
                 "('Wright', 'Eric', 'eric.wright@foo.com', 'HR', 33000.00)");
 
             System.out.println(rowsAffected + "rows affected.\n");
-
+            System.out.println("########################################");
             return "OK";
         }
     }
@@ -123,6 +135,7 @@ public class JDBCService {
             Statement myStmt = myConn.createStatement();
 
             // UPDATE the employee
+            System.out.println("########################################");
             System.out.println("\nEXECUTING THE UPDATE FOR: John Doe\n");
 
             int rowsAffected = myStmt.executeUpdate(
@@ -131,6 +144,7 @@ public class JDBCService {
                             "where department = 'HR'");
 
             System.out.println(rowsAffected + "rows affected.\n");
+            System.out.println("########################################");
 
             return "OK";
         }
@@ -181,10 +195,14 @@ public class JDBCService {
             // SQL injection PROBLEM!!!
 
             // Prepare statement
+            // MIEJSCA ZPARAMETRYZOWANE zastepujemy pytajnikami
+            //
             PreparedStatement myStmt = myConn.prepareStatement(
                 "select * from employees where salary > ? and department = ?");
 
             // Set the parameters
+            // Ustawiamy typy, musimy wiedzieć który pytajnik i określić typ jaki wymaga baza danych.
+
             myStmt.setDouble(1, 80000);
             myStmt.setString(2, "Legal");
             // Execute SQL query
